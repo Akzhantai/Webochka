@@ -7,38 +7,26 @@
     <title>DOCX to PDF</title>
 </head>
 <body>
-<form action="/docxtopdf" method="post" enctype="multipart/form-data" onsubmit="return validateForm()">
+<form id="uploadForm" action="/docxtopdf" method="post" enctype="multipart/form-data" onsubmit="return validateForm()">
     <input type="file" name="files" accept=".docx" multiple>
-    <input type="submit" value="Download PDF Files">
+    <input type="submit" value="Convert to PDF">
 </form>
+
+<div id="downloadLinks"></div>
 
 <script>
     function validateForm() {
         const myFiles = document.querySelector('input[type="file"]').files;
 
         if (myFiles.length === 0) {
-            const h2 = document.createElement('h2');
-            h2.textContent = "Status: error";
-            document.body.appendChild(h2);
-
-            const h3 = document.createElement('h3');
-            h3.textContent = "No files selected.";
-            document.body.appendChild(h3);
-
+            alert("No files selected.");
             return false; // Prevent form submission
         }
 
         for (let i = 0; i < myFiles.length; i++) {
             const file = myFiles[i];
             if (file.size > 10 * 1024 * 1024) {
-                const h2 = document.createElement('h2');
-                h2.textContent = "Status: error";
-                document.body.appendChild(h2);
-
-                const h3 = document.createElement('h3');
-                h3.textContent = "File size exceeds 10MB limit.";
-                document.body.appendChild(h3);
-
+                alert("File size exceeds 10MB limit.");
                 return false; // Prevent form submission
             }
         }
@@ -46,6 +34,31 @@
         // If files are selected and within size limit, the form submission proceeds normally
         return true;
     }
+
+    document.getElementById('uploadForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+
+        const formData = new FormData(this);
+
+        fetch('/docxtopdf', {
+            method: 'POST',
+            body: formData
+        })
+            .then(response => response.json())
+            .then(data => {
+                const downloadLinks = document.getElementById("downloadLinks");
+                downloadLinks.innerHTML = "";
+                data.forEach((file) => {
+                    const link = document.createElement('a');
+                    link.href = `/download/${encodeURIComponent(file)}`;
+                    link.download = file;
+                    link.textContent = file;
+                    downloadLinks.appendChild(link);
+                    downloadLinks.appendChild(document.createElement('br'));
+                });
+            })
+            .catch(error => console.error('Error:', error));
+    });
 
 </script>
 </body>

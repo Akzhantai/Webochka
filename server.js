@@ -2,6 +2,7 @@ const express = require('express');
 const multer = require('multer');
 const path = require('path');
 const docxToPdf = require('docx-pdf');
+const fs = require('fs');
 
 const app = express();
 
@@ -43,9 +44,11 @@ app.post("/docxtopdf", upload.array('files', 10), (req, res) => {
         return res.status(400).send("No files uploaded.");
     }
 
+    const convertedFiles = [];
+
     const processFile = (index) => {
         if (index >= req.files.length) {
-            res.status(200).send("Files converted successfully");
+            res.status(200).send(convertedFiles);
             return;
         }
 
@@ -60,6 +63,7 @@ app.post("/docxtopdf", upload.array('files', 10), (req, res) => {
             }
 
             console.log(`File ${file.originalname} converted to PDF`);
+            convertedFiles.push(outputFilepath);
             processFile(index + 1);
         });
     };
@@ -74,6 +78,12 @@ app.use((err, req, res, next) => {
     } else {
         res.status(500).send('Something went wrong.');
     }
+});
+
+app.get('/download/:filename', (req, res) => {
+    const filename = req.params.filename;
+    const filePath = path.join(__dirname, filename);
+    res.download(filePath);
 });
 
 app.listen(3000, () => {

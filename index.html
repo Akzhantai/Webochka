@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>DOCX to PDF</title>
+</head>
+<body>
+<form action="/docxtopdf" method="post" enctype="multipart/form-data" onsubmit="return validateForm()">
+    <input type="file" name="files" accept=".docx" multiple>
+    <input type="submit" value="Download PDF Files">
+</form>
+
+<script>
+    function validateForm() {
+        const myFiles = document.querySelector('input[type="file"]').files;
+
+        if (myFiles.length === 0) {
+            const h2 = document.createElement('h2');
+            h2.textContent = "Status: error";
+            document.body.appendChild(h2);
+
+            const h3 = document.createElement('h3');
+            h3.textContent = "No files selected.";
+            document.body.appendChild(h3);
+
+            return false; // Prevent form submission
+        }
+
+        for (let i = 0; i < myFiles.length; i++) {
+            const file = myFiles[i];
+            if (file.size > 10 * 1024 * 1024) {
+                const h2 = document.createElement('h2');
+                h2.textContent = "Status: error";
+                document.body.appendChild(h2);
+
+                const h3 = document.createElement('h3');
+                h3.textContent = "File size exceeds 10MB limit.";
+                document.body.appendChild(h3);
+
+                return false; // Prevent form submission
+            }
+        }
+
+        // If files are selected and within size limit, the form submission proceeds normally
+        return true;
+    }
+
+</script>
+</body>
+</html>

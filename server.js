@@ -3,21 +3,36 @@ const multer = require('multer');
 const path = require('path');
 const docxToPdf = require('docx-pdf');
 const fs = require('fs');
+const { MongoClient } = require('mongodb');
+const session = require('express-session');
+const UserModel = require('./app/model/user');
+const UserRoute = require('./app/routes/User')
+const UserController = require('./app/controllers/User');
+const dbConfig = require('./config/database.config.js');
+const mongoose = require('mongoose');
+mongoose.Promise = global.Promise;
 
 const app = express();
-
+app.use('/user',UserRoute)
 app.use(express.static("uploaded"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+app.use(session({
+    secret: 'your-secret-key',
+    resave: false,
+    saveUninitialized: true
+}));
 
 const storageConfig = multer.diskStorage({
     destination: (req, file, cb) => {
         cb(null, "uploaded");
     },
     filename: (req, file, cb) => {
-        cb(null, Date.now() + '-' + file.originalname);
+        const timestamp = new Date().toISOString().replace(/[-:]/g, ''); // Use ISO format without separators
+        cb(null, timestamp + '_' + file.originalname);
     },
 });
+
 
 const upload = multer({
     storage: storageConfig,
@@ -35,10 +50,37 @@ const upload = multer({
     }
 });
 
+
+// MongoDB Connection URI
+const uri = 'mongodb://localhost:27017/webka';
+const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
+
+mongoose.connect(dbConfig.url, {
+    useNewUrlParser: true
+}).then(() => {
+    console.log("Database Connected Successfully!!");
+}).catch(err => {
+    console.log('Could not connect to the database', err);
+    process.exit();
+});
+
+
+// Middleware to check if user is logged in
+function requireLogin(req, res, next) {
+    if (req.session && req.session.user) {
+        return next();
+    } else {
+        return res.status(401).send("Unauthorized");
+    }
+}
+app.get('/register', (req, res) => {
+    res.sendFile(path.join(__dirname, "register.html"));
+});
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, "index.html"));
 });
 
+//conversion
 app.post("/docxtopdf", upload.array('files', 10), (req, res) => {
     if (!req.files || req.files.length === 0) {
         return res.status(400).send("No files uploaded.");
@@ -71,20 +113,16 @@ app.post("/docxtopdf", upload.array('files', 10), (req, res) => {
     processFile(0);
 });
 
-// Error handling middleware
-app.use((err, req, res, next) => {
-    if (err.code === 'FILE_TYPE_ERROR') {
-        res.status(400).send(err.message);
-    } else {
-        res.status(500).send('Something went wrong.');
-    }
-});
-
+//download
 app.get('/download/:filename', (req, res) => {
     const filename = req.params.filename;
     const filePath = path.join(__dirname, filename);
     res.download(filePath);
 });
+
+app.use('/users', UserRoute);
+app.post('/register', UserController.create);
+app.post('/login', UserController.login);
 
 app.listen(3000, () => {
     console.log("App is listening on port 3000");

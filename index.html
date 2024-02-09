@@ -5,8 +5,11 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>DOCX to PDF</title>
+
 </head>
 <body>
+<a href='/register' style="position: absolute">register</a><br>
+<br>
 <form id="uploadForm" action="/docxtopdf" method="post" enctype="multipart/form-data" onsubmit="return validateForm()">
     <input type="file" name="files" accept=".docx" multiple>
     <input type="submit" value="Convert to PDF">

@@ -1,3 +1,4 @@
+/*
 const express = require('express');
 const multer = require('multer');
 const path = require('path');
@@ -9,6 +10,7 @@ const config = require('config');
 const appController = require('./controllers/appController');
 const isAuth = require('./middleware/is-auth');
 const connectDB = require('./config/db');
+const Conversion = require('./models/conversion'); // Import the Conversion model
 
 const mongoURI = config.get('mongoURI');
 const app = express();
@@ -98,14 +100,14 @@ app.get('/dashboard', isAuth, appController.dashboard_get);
 app.post('/logout', appController.logout_post);
 
 // File Upload and Conversion Route
-app.post('/docxtopdf', upload.array('files', 10), (req, res) => {
+app.post('/docxtopdf', upload.array('files', 10), async (req, res) => {
     if (!req.files || req.files.length === 0) {
         return res.status(400).send('No files uploaded.');
     }
 
     const convertedFiles = [];
 
-    const processFile = (index) => {
+    const processFile = async (index) => {
         if (index >= req.files.length) {
             res.status(200).send(convertedFiles);
             return;
@@ -114,7 +116,7 @@ app.post('/docxtopdf', upload.array('files', 10), (req, res) => {
         const file = req.files[index];
         const outputFilepath = path.join("converted", Date.now() + "_" + file.originalname.replace(/\.docx$/, ".pdf"));
 
-        docxToPdf(file.path, outputFilepath, (err) => {
+        await docxToPdf(file.path, outputFilepath, async (err) => {
             if (err) {
                 console.error(err);
                 res.status(500).send('Conversion failed.');
@@ -122,30 +124,41 @@ app.post('/docxtopdf', upload.array('files', 10), (req, res) => {
             }
 
             console.log(`File ${file.originalname} converted to PDF`);
+
+            // Save conversion details to the database
+            const conversion = new Conversion({
+                originalFilename: file.originalname,
+                convertedFilename: outputFilepath
+            });
+            await conversion.save();
+
             convertedFiles.push(outputFilepath);
-            processFile(index + 1);
+            await processFile(index + 1);
         });
     };
 
-    processFile(0);
+    await processFile(0);
 });
 
-// Error handling middleware
-app.use((err, req, res, next) => {
-    if (err.code === 'FILE_TYPE_ERROR') {
-        res.status(400).send(err.message);
-    } else {
-        res.status(500).send('Something went wrong.');
+// Conversion History Page Route
+app.get('/history', async (req, res) => {
+    try {
+        const conversions = await Conversion.find().sort({ timestamp: -1 });
+        res.render('history', { conversions });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Server Error');
     }
 });
 
 // Serve downloaded files
 app.get('/download/:filename', (req, res) => {
     const filename = req.params.filename;
-    const filePath = path.join(__dirname,filename);
+    const filePath = path.join(__dirname, filename);
     res.download(filePath);
 });
 
 // Start server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`App Running on http://localhost:${PORT}`));
+ */

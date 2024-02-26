@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dashboard | Node Auth</title>
+  <style>
+    button {
+      padding: 10px 17px;
+      margin-top: 1rem;
+      font-size: 1rem;
+      background: #eee;
+      border: 1px solid #333;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+<form id="uploadForm" action="/docxtopdf" method="post" enctype="multipart/form-data" onsubmit="return validateForm()">
+  <input type="file" name="files" accept=".docx" multiple>
+  <input type="submit" value="Convert to PDF">
+</form>
+
+<div id="downloadLinks"></div>
+
+<form action="/logout" method="POST">
+  <button>Logout</button>
+</form>
+
+<script>
+  function validateForm() {
+    const myFiles = document.querySelector('input[type="file"]').files;
+
+    if (myFiles.length === 0) {
+      alert("No files selected.");
+      return false; // Prevent form submission
+    }
+
+    for (let i = 0; i < myFiles.length; i++) {
+      const file = myFiles[i];
+      if (file.size > 10 * 1024 * 1024) {
+        alert("File size exceeds 10MB limit.");
+        return false; // Prevent form submission
+      }
+    }
+
+    // If files are selected and within size limit, the form submission proceeds normally
+    return true;
+  }
+
+  document.getElementById('uploadForm').addEventListener('submit', function(event) {
+    event.preventDefault();
+
+    const formData = new FormData(this);
+
+    fetch('/docxtopdf', {
+      method: 'POST',
+      body: formData
+    })
+            .then(response => response.json())
+            .then(data => {
+              const downloadLinks = document.getElementById("downloadLinks");
+              downloadLinks.innerHTML = "";
+              data.forEach((file) => {
+                const link = document.createElement('a');
+                link.href = `/download/${encodeURIComponent(file)}`;
+                link.download = file;
+                link.textContent = file;
+                downloadLinks.appendChild(link);
+                downloadLinks.appendChild(document.createElement('br'));
+              });
+            })
+            .catch(error => console.error('Error:', error));
+  });
+
+</script>
+</body>
+</html>

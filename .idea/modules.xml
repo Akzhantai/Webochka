@@ -2,7 +2,11 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+<<<<<<< HEAD
       <module fileurl="file://$PROJECT_DIR$/.idea/untitled1.iml" filepath="$PROJECT_DIR$/.idea/untitled1.iml" />
+=======
+      <module fileurl="file://$PROJECT_DIR$/.idea/webochka.iml" filepath="$PROJECT_DIR$/.idea/webochka.iml" />
+>>>>>>> 3dc219d (webka)
     </modules>
   </component>
 </project>
